@@ -4,7 +4,7 @@ Browse [opds](https://en.wikipedia.org/wiki/Open_Publication_Distribution_System
 #### Installation
 
 ```lua
-use 'kolja/telescope-opds.nvim'
+use 'kolja/telescope-opds'
 ```
 
 #### Setup
