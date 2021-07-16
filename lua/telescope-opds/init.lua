@@ -190,10 +190,6 @@ opds.browse = function(opt)
                 return true
             end
 
-            local info = function(num)
-                print(vim.inspect(pickers))
-            end
-
             map('i', '<CR>' , follow_link)
             map('n', '<CR>' , follow_link)
             map('n', 'l'    , follow_link)
@@ -201,7 +197,6 @@ opds.browse = function(opt)
             map('n', 'h'    , back_link)
             map('n', 'r'    , toggle_raw)
             map('n', 'o'    , open)
-            map('n', 'i'    , info)
 
             return true
         end
