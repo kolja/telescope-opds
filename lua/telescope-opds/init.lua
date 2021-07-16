@@ -1,7 +1,7 @@
 
 local Job = require('plenary.job')
-local xml2lua = require('xml2lua')
-local handler = require('xmlhandler.tree')
+local xml2lua = require('telescope-opds.xml2lua')
+local handler = require('telescope-opds.xmlhandler.tree')
 local url = require('telescope-opds.neturl')
 local state = require('telescope.actions.state')
 local actions = require('telescope.actions')
@@ -9,7 +9,7 @@ local finders = require('telescope.finders')
 local previewer = require('telescope.previewers.buffer_previewer')
 local pickers = require('telescope.pickers')
 local sorters = require('telescope.sorters')
-local util = require('util')
+local util = require('telescope-opds.util')
 
 local opds = {}
 

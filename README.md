@@ -1,16 +1,10 @@
-# Telescope-opds.nvim
-Browse [opds](https://en.wikipedia.org/wiki/Open_Publication_Distribution_System) servers.
+# Telescope-opds
+Browse [opds](https://en.wikipedia.org/wiki/Open_Publication_Distribution_System) catalogs.
 
 #### Installation
 
 ```lua
 use 'kolja/telescope-opds'
-```
-
-#### Setup
-
-```lua
-require('telescope').load_extension('opds')
 ```
 
 #### Browse opds catalog
@@ -25,3 +19,7 @@ require('telescope').extensions.opds.browse({
                   end
     })
 ```
+
+#### Status
+
+needs your feedback and code-review
