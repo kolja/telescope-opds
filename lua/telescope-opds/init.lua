@@ -70,24 +70,24 @@ local render_preview = function(entry, raw)
     if (raw) then
         return vim.split(vim.inspect(entry), "\n")
     end
-    
-    if (entry.author) then 
+
+    if (entry.author) then
         local authors = vim.fn.map(util.nest(entry.author), function(_,author) return author.name end)
-        table.insert(page, table.concat(authors, ", ")) 
+        table.insert(page, table.concat(authors, ", "))
         table.insert(page, "")
     end
-    if (entry.title) then 
-        table.insert(page, entry.title) 
+    if (entry.title) then
+        table.insert(page, entry.title)
         table.insert(page, "")
     end
-    if (entry.category) then 
+    if (entry.category) then
         l = true
         local cats = vim.fn.map(util.nest(entry.category), function(_,cat) return cat._attr.label end)
-        table.insert(page, 'tags:\t'..table.concat(cats, ", ")) 
+        table.insert(page, 'tags:\t'..table.concat(cats, ", "))
     end
-    if (entry['dcterms:language']) then 
+    if (entry['dcterms:language']) then
         l = true
-        table.insert(page, 'lang:\t'..entry['dcterms:language']) 
+        table.insert(page, 'lang:\t'..entry['dcterms:language'])
     end
     if (entry.content) then
         if l then table.insert(page, '') end
@@ -102,7 +102,7 @@ end
 
 opds.browse = function(opt)
 
-    --[[ 
+    --[[
     opt = {
         cmd = '/usr/bin/curl',
         url = <opds-server>,
@@ -110,13 +110,13 @@ opds.browse = function(opt)
         open_fn = function(media_links) ... end
     }
     --]]
-    
+
     opt.cmd = opt.cmd or '/usr/bin/curl'
 
-    if (opt.path==nil or #opt.path==0) then 
+    if (opt.path==nil or #opt.path==0) then
         opt.path = {{name="/", href=url.parse(opt.url).path}}
     end
-    
+
     local response = request(opt)
 
     pickers.new(opt, {
@@ -129,11 +129,11 @@ opds.browse = function(opt)
             title = function(arg)
                 local breadcrumbs = util.rest(opt.path)
                 if (breadcrumbs==nil) then return "opds" end
-                return table.concat(vim.fn.map(breadcrumbs, 
+                return table.concat(vim.fn.map(breadcrumbs,
                                     function(_,item) return item.name end), " > ")
             end,
-            define_preview = function(self, entry, status) 
-                vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, 
+            define_preview = function(self, entry, status)
+                vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false,
                 render_preview(response[entry.index], opt.raw_preview))
             end,
         }),
@@ -164,25 +164,25 @@ opds.browse = function(opt)
                 opt.raw_preview = not opt.raw_preview
                 local bufnr = state.get_current_picker(num).previewer.state.bufnr
                 local entry = state.get_selected_entry().value
-                vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, 
+                vim.api.nvim_buf_set_lines(bufnr, 0, -1, false,
                                             render_preview(entry, opt.raw_preview))
-            end  
+            end
 
             local open = function(num)
                 local entry = state.get_selected_entry()
-                if (entry.links.media==nil) then 
-                    print('this entry has not media link') 
+                if (entry.links.media==nil) then
+                    print('this entry has not media link')
                     return
                 end
                 if (opt.open_fn==nil) then
                     print('set function \'open_fn = function(<media-link>) ... end\' to open media')
-                    return 
+                    return
                 end
 
                 local opds = url.parse(opt.url)
                 local links = vim.fn.map( entry.links.media, function(_,v)
                     local href = v.href
-                    opds.path = href 
+                    opds.path = href
                     v.href = tostring(opds:normalize())
                     return v
                 end)
