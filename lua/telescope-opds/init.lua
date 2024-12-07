@@ -21,16 +21,23 @@ local request = function(opt)
     local opds = url.parse(opt.url)
     opds.path = util.last(opt.path).href
 
-    local read = function(j, ret)
+    local read = function(j, _)
         parser:parse(table.concat(j:result()))
         for k,v in pairs(handler.root.feed.entry) do
             t[k] = v
         end
     end
 
+    local args = {}
+    if opt.auth then
+        args = {'-u', opt.auth, tostring(opds:normalize())}
+    else
+        args = {tostring(opds:normalize())}
+    end
+
     Job:new({
         command = opt.cmd,
-        args = {tostring(opds:normalize())},
+        args = args,
         on_exit = read
     }):sync()
 
@@ -190,13 +197,13 @@ opds.browse = function(opt)
                 return true
             end
 
-            map('i', '<CR>' , follow_link)
-            map('n', '<CR>' , follow_link)
-            map('n', 'l'    , follow_link)
-            map('n', '<ESC>', back_link)
-            map('n', 'h'    , back_link)
-            map('n', 'r'    , toggle_raw)
-            map('n', 'o'    , open)
+            map({'n', 'i'}, '<CR>' , follow_link)
+            map('n',        'l'    , follow_link)
+            map({'n', 'i'}, '>'    , follow_link)
+            map({'n', 'i'}, '<'    , back_link)
+            map('n',        'h'    , back_link)
+            map('n',        'r'    , toggle_raw)
+            map('n',        'o'    , open)
 
             return true
         end

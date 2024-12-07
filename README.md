@@ -12,7 +12,8 @@ use 'kolja/telescope-opds'
 ```lua
 require('telescope').extensions.opds.browse({
         cmd = '/usr/bin/curl',      -- /usr/bin/curl is the default
-        url = <opds-server>,        -- e.g. http://your.opds.server/root
+        url = <opds-server>,        -- e.g. http://your.opds.server/catalog
+        auth = 'user:password',     -- optional
         raw_preview = false,        -- render raw xml2lua output to preview
         open_fn = function(media_links)
                        -- code to download and display goes here...
