@@ -1,5 +1,6 @@
 
 local Job = require('plenary.job')
+local Path = require('plenary.path')
 local xml2lua = require('telescope-opds.xml2lua')
 local handler = require('telescope-opds.xmlhandler.tree')
 local url = require('telescope-opds.neturl')
@@ -44,16 +45,59 @@ local request = function(opt)
     return t
 end
 
+local download = function(opt, href, filename)
+
+    local temp_dir = Path:new(vim.fn.tempname()):parent()
+    local tempfile = temp_dir:joinpath(Path:new(filename).filename)
+    tempfile:touch()
+    local absolute = tempfile:absolute()
+
+    local base_url = opt.url
+    if base_url:sub(-1) == '/' then
+      base_url = base_url:sub(1, -2)
+    end
+    local full_path = base_url .. href
+    local args = {full_path, '-o', absolute}
+    if opt.auth then
+        args = {'-u', opt.auth, unpack(args)}
+    end
+
+    local write = function(contents, return_val)
+      if return_val ~= 0 then
+        print('Error during download:', return_val)
+        return nil
+      end
+
+      vim.schedule(function()
+        local ok, result = pcall(vim.fn.writefile, contents:result(), absolute)
+
+        if not ok then
+          print('Error writing temporary file:', result)
+          return nil
+        end
+
+        return ok
+      end)
+    end
+
+    Job:new({
+        command = opt.cmd,
+        args = args,
+        on_exit = write
+    }):sync()
+
+    return absolute
+end
 local find_links = function(item)
     local links = {}
     for key,link in pairs(util.nest(item.link)) do
         if (util.starts_with(link._attr['type'], "application/atom+xml")) then
             links['next'] = link._attr['href']
         end
-        if (util.starts_with(link._attr['type'], "application/epub+zip") or
-            util.starts_with(link._attr['type'], "application/pdf")) then
-
+        local type = string.match(link._attr['type'], "epub") or string.match(link._attr['type'], "pdf")
+        if (type) then
             links.media = links.media or {}
+            link._attr['type'] = type
             table.insert(links.media, link._attr)
         end
     end
@@ -113,6 +157,7 @@ opds.browse = function(opt)
     opt = {
         cmd = '/usr/bin/curl',
         url = <opds-server>,
+        auth = 'username:password',
         raw_preview = false, -- render raw xml2lua output to preview
         open_fn = function(media_links) ... end
     }
@@ -178,7 +223,7 @@ opds.browse = function(opt)
             local open = function(num)
                 local entry = state.get_selected_entry()
                 if (entry.links.media==nil) then
-                    print('this entry has not media link')
+                    print('this entry has no media link')
                     return
                 end
                 if (opt.open_fn==nil) then
@@ -189,9 +234,11 @@ opds.browse = function(opt)
                 local opds = url.parse(opt.url)
                 local links = vim.fn.map( entry.links.media, function(_,v)
                     local href = v.href
+                    local title = v.title or 'untitled'
                     opds.path = href
                     v.href = tostring(opds:normalize())
-                    return v
+                    local filename = download(opt, href, title)
+                    return vim.tbl_deep_extend('force', v, {filename=filename})
                 end)
                 opt.open_fn(links)
                 return true
