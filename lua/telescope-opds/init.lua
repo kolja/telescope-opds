@@ -202,8 +202,8 @@ opds.browse = function(opt)
                     print('this entry has no media link')
                     return
                 end
-                if (opt.open_fn==nil) then
-                    print('set function \'open_fn = function(<media-link>) ... end\' to open media')
+                if (opt.openers==nil) then
+                    print('set function \'openers = {<epub|pdf> = function(<media-link>) ... end}\' to open media')
                     return
                 end
 
@@ -216,7 +216,30 @@ opds.browse = function(opt)
                     local filename = download(opt, href, title)
                     return vim.tbl_deep_extend('force', v, {filename=filename})
                 end)
-                opt.open_fn(links)
+
+                local media = nil
+                if #links == 0 then
+                  error("No media found!")
+                  return
+                elseif #links == 1 then
+                  media = links[1]
+                else
+                  local choices = vim.tbl_map(function (mda) return mda.type .." : ".. mda.title end, links)
+                  vim.ui.select(
+                    choices,
+                    { prompt = "Please choose:" },
+                    function(_, idx)
+                      if not idx then return end
+                      media = links[idx]
+                    end)
+                end
+
+                local result, err = pcall(function()
+                  opt.openers[media.type](media)
+                end)
+                if not result then
+                  vim.api.nvim_echo({{string.format("\nError opening media of type %s.\nDid you configure an opener for this media type?", media.type), nil }}, false, {})
+                end
                 return true
             end
 
