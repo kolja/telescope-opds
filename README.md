@@ -21,12 +21,34 @@ require('telescope').extensions.opds.browse({
         -- and open it in a new buffer like this:
 
         open_fn = function(media_links)
-          local epub = vim.tbl_filter(function (link) return link.type == 'epub' end, media_links)[1]
-          if epub then
-            vim.cmd('enew!')
-            vim.cmd('read! pandoc --from epub --to markdown "'..epub.filename..'"')
-          else
-            print('no epub found')
+
+          local media = {}
+          local openers = {             -- openers for different media types
+            epub = function(media)
+              vim.cmd('enew!')
+              vim.cmd('read! pandoc --from epub --to markdown "'..media.filename..'"')
+            end,
+            pdf = function(media)
+              vim.cmd('!open /Applications/Skim.app "'..media.filename..'"')
+            end
+          }
+
+          if #media_links == 0 then
+            error("No media found!")
+            return
+          elseif #media_links == 1 then -- if exactily one media found, open it
+            media = media_links[1]
+            openers[media.type](media)
+          else                          -- if multiple media found, let the user choose which one to open
+            local choices = vim.tbl_map(function (media) return media.type .." : ".. media.title end, media_links)
+            vim.ui.select(
+              choices,
+              { prompt = "Please choose:" },
+              function(_, idx)
+                if not idx then return end
+                media = media_links[idx]
+                openers[media.type](media)
+              end)
           end
         end
     })

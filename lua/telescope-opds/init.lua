@@ -88,6 +88,7 @@ local download = function(opt, href, filename)
 
     return absolute
 end
+
 local find_links = function(item)
     local links = {}
     for key,link in pairs(util.nest(item.link)) do
@@ -164,6 +165,7 @@ opds.browse = function(opt)
     --]]
 
     opt.cmd = opt.cmd or '/usr/bin/curl'
+    vim.api.nvim_input("<esc>")
 
     if (opt.path==nil or #opt.path==0) then
         opt.path = {{name="/", href=url.parse(opt.url).path}}
@@ -194,32 +196,6 @@ opds.browse = function(opt)
 
         attach_mappings = function(prompt_bufnr, map)
 
-            local follow_link = function(num)
-                actions.close(num)
-                local entry = state.get_selected_entry()
-                if (entry.links['next'] ~= nil) then
-                    table.insert(opt.path, {name=entry.display,href=entry.links['next']})
-                    opds.browse(opt)
-                end
-                return true
-            end
-
-            local back_link = function(num)
-                actions.close(num)
-                if (#opt.path == 1) then return true end
-                table.remove(opt.path)
-                opds.browse(opt)
-                return true
-            end
-
-            local toggle_raw = function(num)
-                opt.raw_preview = not opt.raw_preview
-                local bufnr = state.get_current_picker(num).previewer.state.bufnr
-                local entry = state.get_selected_entry().value
-                vim.api.nvim_buf_set_lines(bufnr, 0, -1, false,
-                                            render_preview(entry, opt.raw_preview))
-            end
-
             local open = function(num)
                 local entry = state.get_selected_entry()
                 if (entry.links.media==nil) then
@@ -244,13 +220,47 @@ opds.browse = function(opt)
                 return true
             end
 
+            local follow_link = function(num)
+
+                local entry = state.get_selected_entry()
+
+                if (entry.links.media ~= nil) then
+                    open(num)
+                    return
+                end
+
+                actions.close(num)
+
+                if (entry.links['next'] ~= nil) then
+                    table.insert(opt.path, {name=entry.display,href=entry.links['next']})
+                    opds.browse(opt)
+                end
+
+                return true
+            end
+
+            local back_link = function(num)
+                actions.close(num)
+                if (#opt.path == 1) then return true end
+                table.remove(opt.path)
+                opds.browse(opt)
+                return true
+            end
+
+            local toggle_raw = function(num)
+                opt.raw_preview = not opt.raw_preview
+                local bufnr = state.get_current_picker(num).previewer.state.bufnr
+                local entry = state.get_selected_entry().value
+                vim.api.nvim_buf_set_lines(bufnr, 0, -1, false,
+                                            render_preview(entry, opt.raw_preview))
+            end
+
             map({'n', 'i'}, '<CR>' , follow_link)
             map('n',        'l'    , follow_link)
             map({'n', 'i'}, '>'    , follow_link)
             map({'n', 'i'}, '<'    , back_link)
             map('n',        'h'    , back_link)
             map('n',        'r'    , toggle_raw)
-            map('n',        'o'    , open)
 
             return true
         end
